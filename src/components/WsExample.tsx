@@ -1,8 +1,10 @@
-import React, { useContext, useEffect, useState } from "react";
+import { useContext, useState } from "react";
 import { WebSocketContext } from "../context/WebSocketContext";
+import Cookies from "universal-cookie";
 
 const WsExample = () => {
-  const { socket, setToken }: any = useContext(WebSocketContext);
+  const { socket, categories }: any = useContext(WebSocketContext);
+  const cookies = new Cookies(null, { path: "/" });
   const [count, setCount] = useState(0);
 
   const emitMessage = (data: object) => {
@@ -12,28 +14,25 @@ const WsExample = () => {
     });
   };
 
-  useEffect(() => {
-    socket.on("userLogged", (res: any) => {
-      setToken(res.access_token);
-      console.log(res.access_token);
+  const loginEvent = async () => {
+    await socket.emit("loginIn", {
+      email: "Breidydl7@gmail.com",
+      password: "123456789",
     });
-    socket.on("resClient", (res: any) => {
+    socket.on("loginOut", (res: any) => {
+      cookies.set("access_token", res.access_token);
       console.log(res);
     });
-  }, [setToken, socket]);
-
-  const loginEvent = (userData: object) => {
-    socket.emit("login", userData);
   };
 
-  const getClient = () => {
-    socket.emit("getClients", "Breidydl7@gmail.com");
+  const getCookies = () => {
+    console.log(cookies.get("access_token"));
   };
 
   const addCategory = () => {
     socket.emit("createCategory", {
-      name: "categoria",
-      iconName: "serial",
+      categoryName: "categoria",
+      categoryIcon: "serial",
     });
   };
 
@@ -53,26 +52,30 @@ const WsExample = () => {
       </button>
       <button
         onClick={() =>
-          loginEvent({
-            email: "Breidydl7@gmail.com",
-            password: "123456789",
-          })
+          loginEvent().then(() =>
+            socket.emit(
+              "getAllCategories",
+              `Bearer ${cookies.get("access_token")}`
+            )
+          )
         }
       >
         Login
       </button>
       <button onClick={() => addCategory()}>Add Category</button>
-      <button onClick={() => getClient()}>GetClients</button>
-      {/* {user.map((elem: any, index: number) => {
-        const { clientId, username, password } = elem;
+      <button onClick={() => getCookies()}>getCookies</button>
+      {categories.map((elem: any, index: number) => {
+        console.log(elem);
+        const { id, categoryName, categoryIcon, createdBy } = elem;
         return (
           <div key={index} style={{ border: "1px solid red", margin: "10px" }}>
-            <p>ID: {clientId}</p>
-            <p>Nombre de usuario: {username}</p>
-            <p>Clave: {password}</p>
+            <p>ID: {id}</p>
+            <p>categoryName: {categoryName}</p>
+            <p>categoryIcon: {categoryIcon}</p>
+            <p>createdBy: {createdBy}</p>
           </div>
         );
-      })} */}
+      })}
     </div>
   );
 };
