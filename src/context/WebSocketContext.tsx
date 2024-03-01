@@ -1,4 +1,4 @@
-import React, { createContext } from "react";
+import React, { createContext, useState } from "react";
 import io from "socket.io-client";
 
 interface webSocketProps {
@@ -8,10 +8,15 @@ interface webSocketProps {
 export const WebSocketContext = createContext({});
 
 const WebSocketProvider = ({ children }: webSocketProps) => {
-  const socket = io('http://localhost:3000');
+  const [token, setToken] = useState("");
+  const socket = io("http://localhost:3000", {
+    extraHeaders: {
+      authorization: `Bearer ${token}`,
+    },
+  });
 
   return (
-    <WebSocketContext.Provider value={{ socket }}>
+    <WebSocketContext.Provider value={{ socket, setToken, token }}>
       {children}
     </WebSocketContext.Provider>
   );

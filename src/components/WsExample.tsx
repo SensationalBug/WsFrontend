@@ -2,8 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { WebSocketContext } from "../context/WebSocketContext";
 
 const WsExample = () => {
-  const { socket }: any = useContext(WebSocketContext);
-  const [users, setUsers] = useState([]);
+  const { socket, setToken }: any = useContext(WebSocketContext);
   const [count, setCount] = useState(0);
 
   const emitMessage = (data: object) => {
@@ -14,14 +13,28 @@ const WsExample = () => {
   };
 
   useEffect(() => {
-    socket.on("getClients", (data: []) => setUsers(data));
-    socket.on("leer", (data: any) => {
-      console.log(`ON ${data}`);
+    socket.on("userLogged", (res: any) => {
+      setToken(res.access_token);
+      console.log(res.access_token);
     });
-  }, [socket]);
+    socket.on("resClient", (res: any) => {
+      console.log(res);
+    });
+  }, [setToken, socket]);
 
-  const getTry = () => {
-    socket.emit("leer");
+  const loginEvent = (userData: object) => {
+    socket.emit("login", userData);
+  };
+
+  const getClient = () => {
+    socket.emit("getClients", "Breidydl7@gmail.com");
+  };
+
+  const addCategory = () => {
+    socket.emit("createCategory", {
+      name: "categoria",
+      iconName: "serial",
+    });
   };
 
   return (
@@ -29,15 +42,28 @@ const WsExample = () => {
       <button
         onClick={() =>
           emitMessage({
-            username: `customUser${count}`,
+            role: "admin",
+            name: "anonimo",
             password: "123456789",
+            email: `Breidydl${count}@gmail.com`,
           })
         }
       >
         Add User
       </button>
-      <button onClick={() => getTry()}>Probar</button>
-      {users.map((elem: any, index: number) => {
+      <button
+        onClick={() =>
+          loginEvent({
+            email: "Breidydl7@gmail.com",
+            password: "123456789",
+          })
+        }
+      >
+        Login
+      </button>
+      <button onClick={() => addCategory()}>Add Category</button>
+      <button onClick={() => getClient()}>GetClients</button>
+      {/* {user.map((elem: any, index: number) => {
         const { clientId, username, password } = elem;
         return (
           <div key={index} style={{ border: "1px solid red", margin: "10px" }}>
@@ -46,7 +72,7 @@ const WsExample = () => {
             <p>Clave: {password}</p>
           </div>
         );
-      })}
+      })} */}
     </div>
   );
 };
